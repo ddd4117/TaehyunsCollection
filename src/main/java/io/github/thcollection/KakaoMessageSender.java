@@ -17,14 +17,14 @@ import java.util.Map;
 public class KakaoMessageSender {
     private final RestTemplate restTemplate;
 
-    public void message(String accessToken, String message) {
+    public void message(String accessToken, String title, String message) {
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
         headers.add("Authorization", "Bearer " + accessToken);
 
         MultiValueMap<String, String> formdata = new LinkedMultiValueMap<>();
-        formdata.add("template_object", this.messageTemplate(message));
+        formdata.add("template_object", this.messageTemplate(title, message));
         HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<>(formdata, headers);
 
         ResponseEntity<KakaoResult> result = restTemplate.exchange("https://kapi.kakao.com/v2/api/talk/memo/default/send",
@@ -36,17 +36,20 @@ public class KakaoMessageSender {
         log.info("result : {}", result);
     }
 
-    private String messageTemplate(String message) {
+    private String messageTemplate(String title, String message) {
         StringBuilder builder = new StringBuilder();
         builder.append("{\n" +
                 "   \"object_type\":\"text\",\n" +
-                "   \"text\":\"이것은 테스트\",\n" +
-                "   \"link\":{\n" +
-                "      \"web_url\":\"http://yourwebsite.for.pc\",\n" +
-                "      \"mobile_web_url\":\"http://yourwebsite.for.mobile\"\n" +
-                "   },\n" +
-                "   \"button_title\":\"방문\"\n" +
-                "}");
+                "   \"text\":\"")
+                .append(title)
+                .append("\",\n" +
+                        "   \"link\":{\n" +
+                        "      \"web_url\":\"http://yourwebsite.for.pc\",\n" +
+                        "      \"mobile_web_url\":\"http://yourwebsite.for.mobile\"\n" +
+                        "   },\n" +
+                        "   \"button_title\":\"")
+                .append(message)
+                .append("\"\n}");
 
         return builder.toString();
     }

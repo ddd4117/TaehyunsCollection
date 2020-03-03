@@ -18,6 +18,6 @@ public class KakaoMessageSenderTests {
 
     @Test
     public void messageTests() {
-        messageSender.message(accessToken, "hello");
+        messageSender.message(accessToken, "제목 테스트", "내용 테스트");
     }
 }
