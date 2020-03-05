@@ -4,12 +4,12 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.var;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.firefox.FirefoxDriver;
 import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.web.reactive.function.client.WebClient;
 
 import javax.annotation.PostConstruct;
 import java.io.BufferedReader;
@@ -21,15 +21,23 @@ import java.net.URL;
 @Slf4j
 @Component
 public class CoronaCrawler {
-    private static final String coronaUrl = "https://livecorona.co.kr/";
+    private static final String coronaUrl = "https://wuhanvirus.kr/";
 
     @PostConstruct
     public void init() throws IOException {
-        this.getCoronaInfo();
+        this.crawlingCoronaData();
     }
 
     @Scheduled(cron = "* * 5 * * * *")
     public void getCoronaInfo() throws IOException {
+        this.crawlingCoronaData();
+    }
+
+    public CoronaData crawlingCoronaData() throws IOException{
+//        WebDriver driver = new ChromeDriver();
+//        driver.get(coronaUrl);
+//        Document doc = Jsoup.parse(driver.getPageSource());
+
         Document doc = null;
         var response = Jsoup.connect(coronaUrl).timeout(5000).execute();
 //        WebClient webClient = new WebClient();
@@ -39,43 +47,16 @@ public class CoronaCrawler {
             String yellow = doc.select("span.koreanText.yellow").text();
             String green = doc.select("span.koreanText.green").text();
             String red = doc.select("span.koreanText.red").text();
+
             log.info("yellow{}, green{}, red{}", yellow, green, red);
+
+            CoronaData coronaData = CoronaData.builder()
+                    .today(yellow)
+                    .yesterday(green)
+                    .increase(red)
+                    .build();
+            return coronaData;
         }
-    }
-
-
-    public String getHtml3(String url) {
-
-        try {
-
-            URL targetUrl = new URL(url);
-
-            BufferedReader reader = new BufferedReader(new InputStreamReader(targetUrl.openStream(), "UTF-8"));
-
-            StringBuilder html = new StringBuilder();
-
-            String current = "";
-
-            while ((current = reader.readLine()) != null) {
-
-                html.append(current);
-
-            }
-
-            reader.close();
-
-            return html.toString();
-
-        } catch (MalformedURLException e) {
-
-            e.printStackTrace();
-
-        } catch (IOException e) {
-
-            e.printStackTrace();
-
-        }
-
-        return null;
+        return new CoronaData();
     }
 }
