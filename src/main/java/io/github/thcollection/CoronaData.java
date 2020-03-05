@@ -19,8 +19,8 @@ public class CoronaData {
 
     @Builder
     public CoronaData(String today, String yesterday, String increase) {
-        this.today = Long.parseLong(today);
-        this.yesterday = Long.parseLong(yesterday);
-        this.increase = Long.parseLong(increase);
+        this.today = Long.parseLong(today.replace(",", "").trim());
+        this.yesterday = Long.parseLong(yesterday.replace(",", "").trim());
+        this.increase = Long.parseLong(increase.replace(",", "").trim());
     }
 }

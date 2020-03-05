@@ -1,31 +1,30 @@
 package io.github.thcollection;
 
+import com.gargoylesoftware.htmlunit.BrowserVersion;
+import com.gargoylesoftware.htmlunit.NicelyResynchronizingAjaxController;
+import com.gargoylesoftware.htmlunit.WebClient;
+import com.gargoylesoftware.htmlunit.html.DomElement;
+import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import lombok.extern.slf4j.Slf4j;
-import lombok.var;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.firefox.FirefoxDriver;
-import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.MalformedURLException;
-import java.net.URL;
 
 @Slf4j
 @Component
 public class CoronaCrawler {
-    private static final String coronaUrl = "https://wuhanvirus.kr/";
+    private static final String coronaUrl = "https://livecorona.co.kr/";
+    WebClient webClient = null;
 
     @PostConstruct
     public void init() throws IOException {
-        this.crawlingCoronaData();
+        webClient = new WebClient(BrowserVersion.FIREFOX_60);
+        webClient.getOptions().setThrowExceptionOnScriptError(false);
+        webClient.getOptions().setJavaScriptEnabled(true);
+        webClient.getCookieManager().setCookiesEnabled(false);
+        webClient.setAjaxController(new NicelyResynchronizingAjaxController());
     }
 
     @Scheduled(cron = "* * 5 * * * *")
@@ -33,30 +32,16 @@ public class CoronaCrawler {
         this.crawlingCoronaData();
     }
 
-    public CoronaData crawlingCoronaData() throws IOException{
-//        WebDriver driver = new ChromeDriver();
-//        driver.get(coronaUrl);
-//        Document doc = Jsoup.parse(driver.getPageSource());
+    public CoronaData crawlingCoronaData() throws IOException {
+        HtmlPage page = webClient.getPage(coronaUrl);
+        DomElement infected = page.getFirstByXPath("//span[@class='koreanText yellow']");
+        DomElement complete = page.getFirstByXPath("//span[@class='koreanText green']");
+        DomElement dead = page.getFirstByXPath("//span[@class='koreanText red']");
 
-        Document doc = null;
-        var response = Jsoup.connect(coronaUrl).timeout(5000).execute();
-//        WebClient webClient = new WebClient();
-//        HtmlPage myPage = webClient.getPage(new File("page.html").toURI().toURL());
-        if (response.statusCode() == HttpStatus.OK.value()) {
-            doc = response.parse();
-            String yellow = doc.select("span.koreanText.yellow").text();
-            String green = doc.select("span.koreanText.green").text();
-            String red = doc.select("span.koreanText.red").text();
-
-            log.info("yellow{}, green{}, red{}", yellow, green, red);
-
-            CoronaData coronaData = CoronaData.builder()
-                    .today(yellow)
-                    .yesterday(green)
-                    .increase(red)
-                    .build();
-            return coronaData;
-        }
-        return new CoronaData();
+        return CoronaData.builder()
+                .today(infected.asText())
+                .yesterday(complete.asText())
+                .increase(dead.asText())
+                .build();
     }
 }
