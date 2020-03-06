@@ -1,5 +1,7 @@
 package io.github.thcollection;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
@@ -13,15 +15,19 @@ import org.springframework.web.client.RestTemplate;
 @Slf4j
 public class KakaoMessageSender {
     private final RestTemplate restTemplate;
-
-    public void message(String accessToken, String title, String message) {
+    private ObjectMapper objectMapper = new ObjectMapper();
+    public void message(String accessToken, Message message) {
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
         headers.add("Authorization", "Bearer " + accessToken);
 
         MultiValueMap<String, String> formdata = new LinkedMultiValueMap<>();
-        formdata.add("template_object", this.messageTemplate(title, message));
+        try {
+            formdata.add("template_object", objectMapper.writeValueAsString(message));
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
         HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<>(formdata, headers);
 
         ResponseEntity<KakaoResult> result = restTemplate.exchange("https://kapi.kakao.com/v2/api/talk/memo/default/send",
@@ -31,23 +37,5 @@ public class KakaoMessageSender {
         );
 
         log.info("result : {}", result);
-    }
-
-    private String messageTemplate(String title, String message) {
-        StringBuilder builder = new StringBuilder();
-        builder.append("{\n" +
-                "   \"object_type\":\"text\",\n" +
-                "   \"text\":\"")
-                .append(title)
-                .append("\",\n" +
-                        "   \"link\":{\n" +
-                        "      \"web_url\":\"http://yourwebsite.for.pc\",\n" +
-                        "      \"mobile_web_url\":\"http://yourwebsite.for.mobile\"\n" +
-                        "   },\n" +
-                        "   \"button_title\":\"")
-                .append(message)
-                .append("\"\n}");
-
-        return builder.toString();
     }
 }
