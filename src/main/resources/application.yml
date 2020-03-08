@@ -1,0 +1,3 @@
+url:
+  corona: 'https://livecorona.co.kr'
+  kakaoSend: 'https://kapi.kakao.com/v2/api/talk/memo/default/send'

@@ -1,11 +1,15 @@
-package io.github.thcollection;
+package io.github.thcollection.scheduler;
 
 import com.gargoylesoftware.htmlunit.BrowserVersion;
 import com.gargoylesoftware.htmlunit.NicelyResynchronizingAjaxController;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.html.DomElement;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import io.github.thcollection.CoronaData;
+import io.github.thcollection.KakaoMessageSender;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -14,9 +18,11 @@ import java.io.IOException;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class CoronaCrawler {
-    private static final String coronaUrl = "https://livecorona.co.kr/";
-    WebClient webClient = null;
+    private @Value("${corona.url}") String coronaUrl = "https://livecorona.co.kr";
+    private WebClient webClient = null;
+    private final KakaoMessageSender kakaoMessageSender;
 
     @PostConstruct
     public void init() throws IOException {
@@ -29,7 +35,7 @@ public class CoronaCrawler {
 
     @Scheduled(cron = "* * 5 * * * *")
     public void getCoronaInfo() throws IOException {
-        this.crawlingCoronaData();
+        CoronaData coronaData = this.crawlingCoronaData();
     }
 
     public CoronaData crawlingCoronaData() throws IOException {

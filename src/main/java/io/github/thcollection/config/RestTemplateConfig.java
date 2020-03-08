@@ -1,4 +1,4 @@
-package io.github.thcollection;
+package io.github.thcollection.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

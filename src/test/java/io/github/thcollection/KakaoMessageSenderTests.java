@@ -38,7 +38,7 @@ public class KakaoMessageSenderTests {
 
     @Test
     public void messageTests() {
-        messageSender.message(accessToken, message);
+        messageSender.sendMessage(accessToken, message);
     }
 
     @Test

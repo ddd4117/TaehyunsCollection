@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
@@ -14,23 +15,27 @@ import org.springframework.web.client.RestTemplate;
 @Component
 @Slf4j
 public class KakaoMessageSender {
+    private static final String AUTHORIZATION = "Authorization";
+    private static final String HEADER_BEARER = "Bearer ";
+    private static final String TEMPLATE_OBJECT = "template_object";
     private final RestTemplate restTemplate;
-    private ObjectMapper objectMapper = new ObjectMapper();
-    public void message(String accessToken, Message message) {
+    private final ObjectMapper objectMapper;
+    private @Value("${url.kakaoSend}") String kakaoUrl = "https://kapi.kakao.com/v2/api/talk/memo/default/send";
 
+    public void sendMessage(String accessToken, Message message) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-        headers.add("Authorization", "Bearer " + accessToken);
+        headers.add(AUTHORIZATION, HEADER_BEARER + accessToken);
 
         MultiValueMap<String, String> formdata = new LinkedMultiValueMap<>();
         try {
-            formdata.add("template_object", objectMapper.writeValueAsString(message));
+            formdata.add(TEMPLATE_OBJECT, objectMapper.writeValueAsString(message));
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
         HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<>(formdata, headers);
 
-        ResponseEntity<KakaoResult> result = restTemplate.exchange("https://kapi.kakao.com/v2/api/talk/memo/default/send",
+        ResponseEntity<KakaoResult> result = restTemplate.exchange(kakaoUrl,
                 HttpMethod.POST,
                 entity,
                 KakaoResult.class
